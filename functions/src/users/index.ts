@@ -98,8 +98,7 @@ function registerHandler(firestore: admin.firestore.Firestore): RequestHandler {
 
       logger.log("created new user", {user: userRecord});
 
-      const appId = req.header("x-app-appid");
-      const sdkUserLoginInfo = await getTokenForUser(body.email, appId || "");
+      const sdkUserLoginInfo = await getTokenForUser(body.email);
 
       res.json({
         status: {
@@ -154,12 +153,11 @@ function loginHandler(firestore: admin.firestore.Firestore): RequestHandler {
       const accessToken = signJwt({email: body.email});
       const refreshToken = crypto.randomBytes(64).toString("base64url");
 
-      await firestore.doc(email).update({
+      await firestore.collection("users").doc(email).update({
         refreshToken,
       });
-
-      const appId = req.header("x-app-appid");
-      const sdkUserLoginInfo = await getTokenForUser(body.email, appId || "");
+      
+      const sdkUserLoginInfo = await getTokenForUser(body.email);
 
       res.json({
         status: {
