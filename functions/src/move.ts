@@ -1,5 +1,5 @@
 import * as axios from "axios";
-import {logger} from "firebase-functions";
+import { logger } from "firebase-functions";
 
 /**
  * functions for interacting with the MOVE SDK
@@ -17,70 +17,84 @@ const client = axios.default.create({
   },
 });
 
-type MoveSdkTokenResponse = {
-    accessToken: string,
-    refreshToken: string,
-    contractId: string,
-    audience: string,
-    installationId: string,
-    productId: number,
+export type MoveSdkTokenResponse = {
+  accessToken: string,
+  refreshToken: string,
+  contractId: string,
+  audience: string,
+  installationId: string,
+  productId: number,
 }
 
-type MoveSdkTimelineResponse = [ TimelineItem ]
+export type MoveSdkTimelineResponse = TimelineItem[]
 
-type TimelineItem = {
-    projectId: number,
-    userId: string,
+export type TimelineItem = {
+  projectId: number,
+  userId: string,
 
-    startTs: string,
-    endTs: string,
+  startTs: string,
+  endTs: string,
 
-    startTimeZone: string | undefined,
-    endTimeZone: string | undefined,
+  startTimeZone: string | undefined,
+  endTimeZone: string | undefined,
 
-    type: string,
+  type: string,
 
-    features: TimelineItemFeatures
+  features: TimelineItemFeatures
 }
 
-type TimelineItemFeatures = {
-    startLocation: LocationFeature,
-    endLocation: LocationFeature,
-    source: { id: string, name: string },
-    scores: Map<string, number>,
-    drivingBehaviorEvents: { events: [ DrivingBehaviorEvent ], validTime: number },
-    phoneDistractions: { distractions: [ PhoneDistraction ], secondsPerType: Map<string, number> },
-    gpsStats: GpsStats,
-    transport: { type: string, probabilities: Map<string, number> }
-    metas: Map<string, string>,
+export type TimelineItemFeatures = {
+  startLocation: LocationFeature,
+  endLocation: LocationFeature,
+  source: { id: string, name: string },
+  scores: Map<string, number>,
+  drivingBehaviorEvents: { events: DrivingBehaviorEvent[], validTime: number },
+  phoneDistractions: { distractions: PhoneDistraction[], secondsPerType: Map<string, number> },
+  gpsStats: GpsStats,
+  transport: { type: string, probabilities: Map<string, number> }
+  metas: Map<string, string>,
 }
 
-type LocationFeature = {
-    lat: number,
-    lon: number,
-    name: string | undefined,
-    timeZone: string | undefined,
+export type LocationFeature = {
+  lat: number,
+  lon: number,
+  name: string | undefined,
+  timeZone: string | undefined,
 }
 
-type DrivingBehaviorEvent = {
-    timestamp: string,
-    type: string,
-    strength: number,
-    lat: number,
-    lon: number,
-    rawAccel: number,
+export type DrivingBehaviorEvent = {
+  timestamp: string,
+  type: string,
+  strength: number,
+  lat: number,
+  lon: number,
+  rawAccel: number,
 }
 
-type PhoneDistraction = {
-    type: string,
-    start: string,
-    end: string,
+export type PhoneDistraction = {
+  type: string,
+  start: string,
+  end: string,
 }
 
-type GpsStats = {
-    distance: number,
-    maxSpeed: number,
-    averageSpeed: number,
+export type GpsStats = {
+  distance: number,
+  maxSpeed: number,
+  averageSpeed: number,
+}
+
+export type WayPoint = {
+  timestamp: string,
+  lat: number,
+  lon: number,
+  wayPointInfo: {
+    speed: number | undefined,
+    speedLimit: number | undefined,
+    wayType: string | undefined,
+    origLat: number | undefined,
+    origLon: number | undefined,
+    dangerousAreaId: string | undefined,
+  } | undefined,
 }
 
 export async function getTokenForUser(userId: string): Promise<MoveSdkTokenResponse | undefined> {
@@ -92,28 +106,72 @@ export async function getTokenForUser(userId: string): Promise<MoveSdkTokenRespo
     });
 
     return response.data;
-  } catch(e: any) {
-    if(e instanceof axios.AxiosError) {
+  } catch (e: any) {
+    if (e instanceof axios.AxiosError) {
       logger.error("AxiosError: ", { error: e });
     }
     throw e;
   }
 }
 
-export async function getTimeline(userId: string, from: number, to: number): Promise<MoveSdkTimelineResponse | undefined> {
+export async function getTimeline(userId: string, from: number, to: number, limit: number | undefined = undefined): Promise<MoveSdkTimelineResponse | undefined> {
   try {
-    const response = await client.post("/v20/timeline", {
+    const params: any = {
       projectId: MOVE_SDK_PROJECT_ID,
       userId,
       from,
       to,
-    }, {
-      auth: { username: MOVE_SDK_PROJECT_ID.toString(), password: MOVE_SDK_API_KEY }
+    };
+    if (limit) {
+      params["limit"] = limit;
+    }
+
+    const response = await client.get("/v20/timeline", {
+      auth: { username: MOVE_SDK_PROJECT_ID.toString(), password: MOVE_SDK_API_KEY },
+      params
     });
 
     return response.data;
-  } catch(e: any) {
-    if(e instanceof axios.AxiosError) {
+  } catch (e: any) {
+    if (e instanceof axios.AxiosError) {
+      logger.error("AxiosError: ", { error: e });
+    }
+    throw e;
+  }
+}
+
+export async function getTimelineItem(userId: string, startTs: number): Promise<TimelineItem | undefined> {
+  try {
+    const response = await client.get(`/v20/timeline/${startTs}`, {
+      auth: { username: MOVE_SDK_PROJECT_ID.toString(), password: MOVE_SDK_API_KEY },
+      params: {
+        projectId: MOVE_SDK_PROJECT_ID,
+        userId
+      }
+    });
+
+    return response.data;
+  } catch (e: any) {
+    if (e instanceof axios.AxiosError) {
+      logger.error("AxiosError: ", { error: e });
+    }
+    throw e;
+  }
+}
+
+export async function getPoints(userId: string, startTs: number): Promise<WayPoint[] | undefined> {
+  try {
+    const response = await client.get(`/v20/timeline/${startTs}/points`, {
+      auth: { username: MOVE_SDK_PROJECT_ID.toString(), password: MOVE_SDK_API_KEY },
+      params: {
+        projectId: MOVE_SDK_PROJECT_ID,
+        userId
+      }
+    });
+
+    return response.data;
+  } catch (e: any) {
+    if (e instanceof axios.AxiosError) {
       logger.error("AxiosError: ", { error: e });
     }
     throw e;
