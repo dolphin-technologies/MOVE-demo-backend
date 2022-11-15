@@ -105,7 +105,17 @@ export async function getTokenForUser(userId: string): Promise<MoveSdkTokenRespo
       headers: { "authorization": MOVE_SDK_API_KEY }
     });
 
-    return response.data;
+    const res = response.data;
+    if(res) {
+      if(res.userId) {
+        res.contractId = res.userId;
+      }
+      if(res.projectId) {
+        res.productId = res.projectId;
+      }
+    }
+
+    return res;
   } catch (e: any) {
     if (e instanceof axios.AxiosError) {
       logger.error("AxiosError: ", { error: e });
@@ -130,9 +140,6 @@ export async function getTimeline(userId: string, from: number, to: number, limi
       auth: { username: MOVE_SDK_PROJECT_ID.toString(), password: MOVE_SDK_API_KEY },
       params
     });
-
-    console.log(response);
-    console.log(response.data);
 
     const rawItems = response.data;
 

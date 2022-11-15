@@ -44,32 +44,37 @@ function usersHandler(firestore: admin.firestore.Firestore): Router {
 
 function getUserHandler(firestore: admin.firestore.Firestore): RequestHandler {
   return async (req: Request, res: Response, next: NextFunction) => {
-    const email = res.locals.email as string;
+    try {
+      const email = res.locals.email as string;
 
-    const userRecord = await firestore.doc(email).get();
-    const userData = userRecord.data();
-    if (!userRecord || !userRecord.exists || !userData) {
-      res.status(404);
-      res.end("user does not exist");
-      return;
+      const userRecord = await firestore.doc(email).get();
+      const userData = userRecord.data();
+      if (!userRecord || !userRecord.exists || !userData) {
+        res.status(404);
+        res.end("user does not exist");
+        return;
+      }
+
+      res.json({
+        status: {
+          code: 0,
+        },
+        data: {
+          name: userData.name,
+          email: userData.email,
+          phone: userData.phone,
+          registrationDate: Date.now(),
+          contractId: userData.email,
+          gender: "na",
+          company: "na",
+          consents: [],
+          fields: {},
+        },
+      });
+    } catch(e) {
+      console.error(e);
+      next(e);
     }
-
-    res.json({
-      status: {
-        code: 0,
-      },
-      data: {
-        name: userData.name,
-        email: userData.email,
-        phone: userData.phone,
-        registrationDate: Date.now(),
-        constractId: userData.email,
-        gender: "na",
-        company: "na",
-        consents: [],
-        fields: {},
-      },
-    });
   };
 }
 
@@ -150,7 +155,7 @@ function loginHandler(firestore: admin.firestore.Firestore): RequestHandler {
       }
 
 
-      const accessToken = signJwt({email: body.email});
+      const accessToken = await signJwt({email: body.email});
       const refreshToken = crypto.randomBytes(64).toString("base64url");
 
       await firestore.collection("users").doc(email).update({
@@ -164,6 +169,7 @@ function loginHandler(firestore: admin.firestore.Firestore): RequestHandler {
           code: 0,
         },
         data: {
+          contractId: body.email,
           productAuthInfo: {
             accessToken,
             refreshToken,

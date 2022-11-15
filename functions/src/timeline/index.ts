@@ -56,7 +56,7 @@ function getAllHandler(): RequestHandler {
 
       const items = await move.getTimeline(userId, from, to) || [];
 
-      console.log(`fount ${items.length} items`);
+      console.log(`found ${items.length} items`);
 
       const formattedItems = items.map(formatItem);
 
