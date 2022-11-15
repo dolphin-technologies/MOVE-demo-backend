@@ -35,7 +35,7 @@ function usersHandler(firestore: admin.firestore.Firestore): Router {
   router.post("/logout", ensureLoggedIn, logoutHandler(firestore));
 
   router.post("/tokens/products", refreshTokenHandler(firestore));
-  router.post("/tokens/sdk", notImplemented);
+  router.post("/tokens/sdks", notImplemented);
 
   router.post("/delete", ensureLoggedIn, notImplemented);
 

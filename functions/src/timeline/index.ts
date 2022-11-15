@@ -19,136 +19,158 @@ function timelineHandler(firestore: admin.firestore.Firestore): Router {
 
 function getAllHandler(): RequestHandler {
   return async (req: Request, res: Response, next: NextFunction) => {
-    const userId = res.locals.email;
-    if (!userId) {
-      res.status(403);
-      res.end("you must be logged in to fetch timeline items");
-      return;
-    }
-
-    const fromQuery = req.query["from"];
-    if (typeof fromQuery !== "string") {
-      res.status(400);
-      res.end("from is a required parameter");
-      return;
-    }
-    const from = parseInt(fromQuery);
-    if (isNaN(from)) {
-      res.status(400);
-      res.end("from must be a number");
-      return;
-    }
-
-    const toQuery = req.query["to"];
-    if (typeof toQuery !== "string") {
-      res.status(400);
-      res.end("from is a required parameter");
-      return;
-    }
-    const to = parseInt(toQuery);
-    if (isNaN(to)) {
-      res.status(400);
-      res.end("from must be a number");
-    }
-
-    const items = await move.getTimeline(userId, from, to) || [];
-    const formattedItems = items.map(formatItem);
-
-    res.json({
-      status: { code: 0 },
-      data: {
-        timelineItemBaseList: formattedItems
+    try {
+      const userId = res.locals.email;
+      if (!userId) {
+        res.status(403);
+        res.end("you must be logged in to fetch timeline items");
+        return;
       }
-    });
-  }
+
+      const fromQuery = req.query["from"];
+      if (typeof fromQuery !== "string") {
+        res.status(400);
+        res.end("from is a required parameter");
+        return;
+      }
+      const from = parseInt(fromQuery);
+      if (isNaN(from)) {
+        res.status(400);
+        res.end("from must be a number");
+        return;
+      }
+
+      const toQuery = req.query["to"];
+      if (typeof toQuery !== "string") {
+        res.status(400);
+        res.end("from is a required parameter");
+        return;
+      }
+      const to = parseInt(toQuery);
+      if (isNaN(to)) {
+        res.status(400);
+        res.end("from must be a number");
+      }
+
+      console.log(`fetching timeline items for user ${userId} between ${from} and ${to}`);
+
+      const items = await move.getTimeline(userId, from, to) || [];
+
+      console.log(`fount ${items.length} items`);
+
+      const formattedItems = items.map(formatItem);
+
+      res.json({
+        status: { code: 0 },
+        data: {
+          timelineItemBaseList: formattedItems
+        }
+      });
+    } catch(e) {
+      next(e);
+    }
+  } 
 }
 
 function getDetailsHandler() {
   return async (req: Request, res: Response, next: NextFunction) => {
-    const userId = res.locals.email;
-    if (!userId) {
-      res.status(403);
-      res.end("you must be logged in to fetch timeline items");
-      return;
-    }
+    try {
+      const userId = res.locals.email;
+      if (!userId) {
+        res.status(403);
+        res.end("you must be logged in to fetch timeline items");
+        return;
+      }
 
-    const idParam = parseInt(req.params["id"]);
-    if (typeof idParam !== "string") {
-      res.status(400);
-      res.end("id is a required parameter");
-      return;
-    }
-    const id = parseInt(idParam);
-    if (isNaN(id)) {
-      res.status(400);
-      res.end("id must be a number");
-      return;
-    }
+      const idParam = req.params["id"];
+      if (typeof idParam !== "string") {
+        res.status(400);
+        res.end("id is a required parameter");
+        return;
+      }
+      const id = parseInt(idParam);
+      if (isNaN(id)) {
+        res.status(400);
+        res.end("id must be a number");
+        return;
+      }
 
-    const startTs = id;
+      const startTs = id;
 
-    const item = await move.getTimelineItem(userId, startTs);
-    if (!item) {
-      res.status(404);
-      res.end("item not found");
-      return;
-    }
+      const item = await move.getTimelineItem(userId, startTs);
+      if (!item) {
+        res.status(404);
+        res.end("item not found");
+        return;
+      }
 
-    const formatted: any = formatItem(item);
+      const formatted: any = formatItem(item);
 
-    const previousId = await findPreviousId(item);
-    const nextId = await findNextId(item);
+      const previousId = await findPreviousId(item);
+      const nextId = await findNextId(item);
 
-    formatted.previousTripId = previousId;
-    formatted.nextTripId = nextId;
+      formatted.previousTripId = previousId;
+      formatted.nextTripId = nextId;
 
-    if (item.type === "CAR") {
-      const points = await move.getPoints(userId, startTs) || [];
+      if (item.type === "CAR") {
+        const points = await move.getPoints(userId, startTs) || [];
 
-      formatted.tripPoints = points.map(p => {
-        return {
-          isoTime: p.timestamp,
-          lat: p.lat.toString(),
-          lon: p.lon.toString(),
-          roadLat: p.wayPointInfo?.origLat,
-          roadLon: p.wayPointInfo?.origLon,
-          altitude: 0, // TODO: needed?
-          speed: p.wayPointInfo?.speed,
-          speedLimit: p.wayPointInfo?.speedLimit,
-          colour: speedColour(p.wayPointInfo?.speed, p.wayPointInfo?.speedLimit),
-          wayType: p.wayPointInfo?.wayType,
-        }
+        formatted.tripPoints = points.map(p => {
+          return {
+            isoTime: p.timestamp,
+            time: p.timestamp,
+            lat: p.lat.toString(),
+            lon: p.lon.toString(),
+            roadLat: (p.wayPointInfo?.origLat || p.lat).toString(),
+            roadLon: (p.wayPointInfo?.origLon || p.lon).toString(),
+            altitude: 0, // TODO: needed?
+            speed: p.wayPointInfo?.speed || 0,
+            speedLimit: p.wayPointInfo?.speedLimit || 0,
+            colour: speedColour(p.wayPointInfo?.speed, p.wayPointInfo?.speedLimit),
+            wayType: p.wayPointInfo?.wayType || "na",
+          }
+        });
+
+        const durationMinutes = (new Date(item.endTs).getTime() - new Date(item.startTs).getTime()) / (60 * 1000);
+        formatted.distractionDetails = distractionDetails(item.features.phoneDistractions.secondsPerType, durationMinutes);
+
+        formatted.distractionEvents = item.features.phoneDistractions.distractions.map(d => {
+          return {
+            type: mapDistractionType(d.type),
+            startIsoTime: d.start,
+            endIsoTime: d.end,
+            durationMinutes: Math.floor((new Date(d.end).getTime() - new Date(d.start).getTime()) / (60 * 1000))
+          };
+        });
+
+        formatted.sectionDistance = sectionDistances(points);
+
+        formatted.drivingEvents = item.features.drivingBehaviorEvents.events.map(e => {
+          return {
+            isoTime: e.timestamp,
+            time: e.timestamp,
+            lat: e.lat,
+            lon: e.lon,
+            value: e.strength,
+            type: mapDBEType(e.type),
+          };
+        });
+      }
+
+      res.json({
+        status: { code: 0 },
+        data: { tripDetail: formatted },
       });
-
-      const durationMinutes = (new Date(item.endTs).getTime() - new Date(item.startTs).getTime()) / (60 * 1000);
-      formatted.distractionDetails = distractionDetails(item.features.phoneDistractions.secondsPerType, durationMinutes);
-
-      formatted.distractionEvents = item.features.phoneDistractions.distractions.map(d => {
-        return {
-          type: mapDistractionType(d.type),
-          startIsoTime: d.start,
-          endIsoTime: d.end,
-        };
-      });
-
-      formatted.sectionDistance = sectionDistances(points);
-
-      formatted.drivingEvents = item.features.drivingBehaviorEvents.events.map(e => {
-        return {
-          time: e.timestamp,
-          lat: e.lat,
-          lon: e.lon,
-          value: e.strength,
-          type: mapDBEType(e.type),
-        };
-      });
+    } catch(e) {
+      next(e);
     }
   };
 }
 
 async function findPreviousId(item: move.TimelineItem): Promise<number | undefined> {
-  const itemsBefore = await move.getTimeline(item.userId, 0, Math.floor(new Date(item.startTs).getTime() / 1000) - 1, 1) || [];
-  const itemBefore = itemsBefore[0];
+  // 1577833200 = beginning of 2020
+  const itemsBefore = await move.getTimeline(item.userId, 1577833200, Math.floor(new Date(item.startTs).getTime() / 1000) - 1, 50) || [];
+  const itemBefore = itemsBefore.filter(i => i.type === "CAR")[0];
   if (itemBefore) {
     return Math.floor(new Date(itemBefore.startTs).getTime() / 1000);
   } else {
@@ -208,41 +230,47 @@ function formatItem(i: move.TimelineItem) {
 
   const id = Math.floor(start.getTime() / 1000);
 
-  const scoreFeature = i.features.scores;
-  const safeness = Math.round(((scoreFeature.get("ACCELERATION") || 100) + (scoreFeature.get("CORNERING") || 100) + (scoreFeature.get("BRAKING") || 100)) / 3.0);
-  const speed = scoreFeature.get("SPEED") || 100;
-  const distraction = scoreFeature.get("SPEED") || 100;
-  const total = Math.round((speed + safeness + distraction) / 3.0);
-  const scores = {
-    speed,
-    distraction,
-    safeness,
-    total,
-  };
-
-  return {
-    id,
-
-    type: i.type,
-
-    startTs: i.startTs,
+  const result: any = { 
+    id, 
+    startTs: i.startTs, 
     endTs: i.endTs,
-
-    startAddress: "",
-    endAddress: "",
-
-    scores,
-
-    distanceMeters: i.features.gpsStats.distance,
-    averageSpeedKph: i.features.gpsStats.averageSpeed,
-    durationMinutes: Math.round((end.getTime() - start.getTime()) / (60 * 1000)),
+    type: i.type,
   };
+
+  if(i.type === "CAR") {
+    const scoreFeature = i.features.scores;
+    const safeness = Math.round(((scoreFeature.get("ACCELERATION") || 100) + (scoreFeature.get("CORNERING") || 100) + (scoreFeature.get("BRAKING") || 100)) / 3.0);
+    const speed = scoreFeature.get("SPEED") || 100;
+    const distraction = scoreFeature.get("SPEED") || 100;
+    const total = Math.round((speed + safeness + distraction) / 3.0);
+    const scores = {
+      speed,
+      distraction,
+      safeness,
+      total,
+    };
+
+    result.startLat = i.features.startLocation.lat;
+    result.startLon = i.features.startLocation.lon;
+    result.endLat = i.features.endLocation.lat;
+    result.endLon = i.features.endLocation.lon;
+
+    result.scores = scores;
+    result.startAddress = i.features.startLocation.lat + ", " + i.features.startLocation.lon;
+    result.endAddress = i.features.endLocation.lat + ", " + i.features.endLocation.lon;
+    result.distanceMeters = i.features.gpsStats.distance;
+    result.averageSpeedKmh = i.features.gpsStats.averageSpeed;
+    result.durationMinutes = Math.round((end.getTime() - start.getTime()) / (60 * 1000))
+  }
+
+
+  return result;
 }
 
 function sectionDistances(points: move.WayPoint[]): { green: number, yellow: number, red: number } {
   let prev: move.WayPoint | undefined;
 
-  let result = { green: 0.0, yellow: 0.0, red: 0.0 }
+  const result = { green: 0.0, yellow: 0.0, red: 0.0 }
 
   for (const point of points) {
     if (!prev) {

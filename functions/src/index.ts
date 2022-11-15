@@ -7,11 +7,13 @@ import timelineHandler from "./timeline";
 import messagesHandler from "./messages";
 
 firebaseAdmin.initializeApp();
+const firestore = firebaseAdmin.firestore();
 
 const app = express();
 
-app.use("/api/v1/users", usersHandler(firebaseAdmin.firestore()));
-app.use("/api/v1/timeline", timelineHandler());
+
+app.use("/api/v1/users", usersHandler(firestore));
+app.use("/api/v1/timeline", timelineHandler(firestore));
 app.use("/api/v1/messages", messagesHandler());
 
 export const move = functions.https.onRequest(app);

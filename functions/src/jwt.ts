@@ -2,7 +2,7 @@ import * as jwt from "jsonwebtoken";
 import {randomBytes} from "crypto";
 
 /**
- * functions for generation and verifying jwt tokens
+ * functions for generating and verifying jwt tokens
  */
 
 export const jwtSecret = process.env.MOVE_SECRET_KEY || randomBytes(64).toString("base64url");

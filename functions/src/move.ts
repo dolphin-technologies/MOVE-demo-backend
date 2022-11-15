@@ -131,7 +131,12 @@ export async function getTimeline(userId: string, from: number, to: number, limi
       params
     });
 
-    return response.data;
+    console.log(response);
+    console.log(response.data);
+
+    const rawItems = response.data;
+
+    return rawItems ? rawItems.map(parseItem) : undefined;
   } catch (e: any) {
     if (e instanceof axios.AxiosError) {
       logger.error("AxiosError: ", { error: e });
@@ -150,7 +155,7 @@ export async function getTimelineItem(userId: string, startTs: number): Promise<
       }
     });
 
-    return response.data;
+    return parseItem(response.data);
   } catch (e: any) {
     if (e instanceof axios.AxiosError) {
       logger.error("AxiosError: ", { error: e });
@@ -176,4 +181,43 @@ export async function getPoints(userId: string, startTs: number): Promise<WayPoi
     }
     throw e;
   }
+}
+
+function parseItem(i: any): TimelineItem {
+  if(!i) {
+    return i;
+  }
+
+  const f = parseFeatures(i.features);
+  i.features = f;
+
+  return i;
+}
+
+function parseFeatures(f: any): TimelineItemFeatures {
+  if(!f) {
+    return f;
+  }
+
+  if(f.metas) {
+    const metas = new Map(Object.entries(f.metas));
+    f.metas = metas;
+  }
+
+  if(f.scores) {
+    const scores = new Map(Object.entries(f.scores));
+    f.scores = scores;
+  }
+
+  if(f.phoneDistractions && f.phoneDistractions.secondsPerType) {
+    const secondsPerType = new Map(Object.entries(f.phoneDistractions.secondsPerType));
+    f.phoneDistractions.secondsPerType = secondsPerType;
+  }
+
+  if(f.transport && f.transport.probabilities) {
+    const probabilities = new Map(Object.entries(f.transport.probabilities));
+    f.transport.probabilities = probabilities;
+  }
+
+  return f;
 }
