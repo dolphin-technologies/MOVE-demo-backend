@@ -67,7 +67,7 @@ function getAllHandler(): RequestHandler {
 }
 
 function getDetailsHandler(): RequestHandler {
-    return handleExceptions(async (req, res, next) => {
+    return handleExceptions(async (req, res) => {
         const userId = res.locals.userId;
         if (!userId) {
             res.status(403);
@@ -97,7 +97,7 @@ function getDetailsHandler(): RequestHandler {
             return;
         }
 
-        const formatted: any = formatItem(item);
+        const formatted = formatItem(item);
 
         const previousId = await findPreviousId(item);
         const nextId = await findNextId(item);

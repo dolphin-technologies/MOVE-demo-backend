@@ -68,7 +68,7 @@ function usersHandler(userRepository: UserRepository): Router {
 }
 
 function getUserHandler(repository: UserRepository): RequestHandler {
-    return handleExceptions(async (_req, res, next) => {
+    return handleExceptions(async (_req, res) => {
         const id = res.locals.userId as string;
 
         const userData = await repository.getUserById(id);
@@ -99,7 +99,7 @@ function getUserHandler(repository: UserRepository): RequestHandler {
 }
 
 function registerHandler(repository: UserRepository): RequestHandler {
-    return handleExceptions(async (req, res, next) => {
+    return handleExceptions(async (req, res) => {
         const body: RegisterUserRequest = req.body;
 
         const passwordHash = await hashPassword(body.password);
@@ -149,7 +149,7 @@ function registerHandler(repository: UserRepository): RequestHandler {
 }
 
 function loginHandler(repository: UserRepository): RequestHandler {
-    return handleExceptions(async (req, res, next) => {
+    return handleExceptions(async (req, res) => {
         const body: LoginRequest = req.body;
 
         const email = body.email;
@@ -179,16 +179,16 @@ function loginHandler(repository: UserRepository): RequestHandler {
 
         const accessToken = await signJwt({ email: body.email, id: userRecord.id });
         const refreshToken = crypto.randomBytes(64).toString("base64url");
-        repository.updateUser({ id: userRecord.id, refreshToken })
+        repository.updateUser({ id: userRecord.id, refreshToken, loggedOut: false })
 
-        const sdkUserLoginInfo = await getTokenForUser(body.email);
+        const sdkUserLoginInfo = await getTokenForUser(userRecord.id);
 
         res.json({
             status: {
                 code: 0,
             },
             data: {
-                contractId: body.email,
+                contractId: userRecord.id,
                 productAuthInfo: {
                     accessToken,
                     refreshToken,
@@ -200,7 +200,7 @@ function loginHandler(repository: UserRepository): RequestHandler {
 }
 
 function logoutHandler(repository: UserRepository): RequestHandler {
-    return handleExceptions(async (req, res) => {
+    return handleExceptions(async (_req, res) => {
         const id = res.locals.userId as string;
 
         await repository.updateUser({ id, loggedOut: true });

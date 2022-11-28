@@ -13,6 +13,7 @@ const firestore = firebaseAdmin.firestore();
 const userRepository = new FirebaseUserRepository(firestore);
 
 const app = express();
+app.disable("x-powered-by");
 
 
 app.use("/api/v1/users", usersHandler(userRepository));
@@ -20,7 +21,7 @@ app.use("/api/v1/timeline", ensureLoggedIn(userRepository), timelineHandler());
 app.use("/api/v1/messages", ensureLoggedIn(userRepository), messagesHandler());
 
 // error handler
-const errorHandler: express.ErrorRequestHandler = (err, _req, res, _next) => {
+const errorHandler: express.ErrorRequestHandler = (err, _req, res) => {
     if(!err.status) {
         err.status = 500;
     }

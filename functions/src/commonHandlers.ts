@@ -2,8 +2,6 @@ import { Request, Response, RequestHandler } from "express";
 import { verifyJwt } from "./jwt";
 import { UserRepository } from "./users/db/repository";
 
-import { logger } from "firebase-functions";
-
 export function handleExceptions(handler: RequestHandler): RequestHandler {
     return async (req, res, next) => {
         try {
@@ -21,8 +19,6 @@ export function notImplemented(_req: Request, res: Response) {
 
 export function ensureLoggedIn(repository: UserRepository): RequestHandler {
     return async (req, res, next) => {
-        logger.info("req", req);
-
         const authHeader = req.header("Authorization");
         if (!authHeader) {
             res.status(401);
