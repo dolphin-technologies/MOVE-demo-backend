@@ -3,7 +3,7 @@ import { logger } from "firebase-functions";
 import * as bcrypt from "bcrypt";
 import * as crypto from "crypto";
 
-import { ensureLoggedIn, handleExceptions } from "../commonHandlers";
+import { handleExceptions } from "../commonHandlers";
 import { signJwt } from "../jwt";
 import { getTokenForUser } from "../move";
 import { UserRepository } from "./db/repository";
@@ -47,22 +47,22 @@ type DeleteRequest = {
     password: string,
 }
 
-function usersHandler(userRepository: UserRepository): Router {
+function usersHandler(authMiddleware: RequestHandler, userRepository: UserRepository): Router {
     const router = Router();
 
-    router.get("/", ensureLoggedIn(userRepository), getUserHandler(userRepository));
+    router.get("/", authMiddleware, getUserHandler(userRepository));
     router.post("/", registerHandler(userRepository));
-    router.patch("/", ensureLoggedIn(userRepository), updateUserHandler(userRepository));
+    router.patch("/", authMiddleware, updateUserHandler(userRepository));
 
     router.post("/login", loginHandler(userRepository));
-    router.post("/logout", ensureLoggedIn(userRepository), logoutHandler(userRepository));
+    router.post("/logout", authMiddleware, logoutHandler(userRepository));
 
     router.post("/tokens/products", refreshTokenHandler(userRepository));
-    router.get("/tokens/sdks", ensureLoggedIn(userRepository), sdkRefreshTokenHandler());
+    router.get("/tokens/sdks", authMiddleware, sdkRefreshTokenHandler());
 
-    router.put("/passwords", ensureLoggedIn(userRepository), updatePasswordHandler(userRepository));
+    router.put("/passwords", authMiddleware, updatePasswordHandler(userRepository));
 
-    router.post("/delete", ensureLoggedIn(userRepository), deleteUserHandler(userRepository));
+    router.post("/delete", authMiddleware, deleteUserHandler(userRepository));
 
     return router;
 }

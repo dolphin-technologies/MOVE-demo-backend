@@ -6,11 +6,11 @@ import * as move from "../move";
  * handlers for interacting with the MOVE timeline
  */
 
-function timelineHandler(): Router {
+function timelineHandler(authMiddleware: RequestHandler): Router {
     const router = Router();
 
-    router.get("/", getAllHandler());
-    router.get("/:id/details", getDetailsHandler());
+    router.get("/", authMiddleware, getAllHandler());
+    router.get("/:id/details", authMiddleware, getDetailsHandler());
 
     return router;
 }
