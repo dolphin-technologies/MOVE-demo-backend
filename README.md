@@ -11,9 +11,16 @@ Clone or download this repository and open the resulting directory.
 If you did not already do so you can set up a new project in the [Firebase Console](https://console.firebase.google.com/).
 Then change the project to be on the [Blaze Plan](https://firebase.google.com/docs/projects/billing/firebase-pricing-plans#switch-between-pricing-plans).
 Configure the project to use your firebase project by running `firebase use --add`, and following the given instructions.
-### 3) Install dependencies
+### 3) Configure 
+In the `functions/` directory create a `.env` file with the following contents:
+```
+  MOVE_SECRET_KEY=<SOME_RANDOM_STRING>
+  MOVE_SDK_PROJECT_ID=<YOUR_MOVE_PROJECTID>
+  MOVE_SDK_API_KEY=<YOUR_MOVE_API_KEY>
+```
+### 4) Install dependencies
 Install the dependencies for the NodeJS project in the `functions/` directory by navigating there and running `npm install`
-### 4) Deploy to Firebase
+### 5) Deploy to Firebase
 Run the command `firebase deploy`.
 After the deploy command finishes, check the output for the URL of your function.
 
