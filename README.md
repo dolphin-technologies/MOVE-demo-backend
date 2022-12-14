@@ -9,6 +9,7 @@ To deploy to firebase you will need a Google Account, a Firebase Project set to 
 Clone or download this repository and open the resulting directory.
 ### 2) Create and Link a Firebase Project
 If you did not already do so you can set up a new project in the [Firebase Console](https://console.firebase.google.com/).
+Then change the project to be on the [Blaze Plan](https://firebase.google.com/docs/projects/billing/firebase-pricing-plans#switch-between-pricing-plans).
 Configure the project to use your firebase project by running `firebase use --add`, and following the given instructions.
 ### 3) Install dependencies
 Install the dependencies for the NodeJS project in the `functions/` directory by navigating there and running `npm install`
