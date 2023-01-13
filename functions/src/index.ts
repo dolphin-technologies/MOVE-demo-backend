@@ -25,7 +25,7 @@ app.use("/api/v1/timeline", timelineHandler(authMiddleware));
 app.use("/api/v1/messages", messagesHandler(authMiddleware, messageStateRepository));
 
 // error handler
-const errorHandler: express.ErrorRequestHandler = (err, _req, res) => {
+const errorHandler: express.ErrorRequestHandler = (err, _req, res, _next) => {
     if (!err.status) {
         err.status = 500;
     }

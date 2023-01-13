@@ -32,6 +32,18 @@ You should be able to run it in any environments where NodeJS applications may b
 But you will need to replace the last line in the `index.ts` file, and call the appropiate startup mechanism 
 for your environment. (e.g. `app.listen(8080)` to run locally on port 8080).
 
+#### Example: running locally
+Replace the line `export const move = functions.https.onRequest(app);` with this code fragment:
+```
+  app.listen(8080, "0.0.0.0", () => {
+    console.log("listening locally on port 8080");
+  });
+```
+Then run `npm run build` in the functions directory to build the application.
+You can now run it locally with `node lib/index.js`. 
+
+Note: when running the application you will need access to google cloud default credentials because the application will still need to access Firestore.
+
 The MOVE Demo Backend depends on Firestore as a Database. 
 To use another Database the repository interfaces in `messages/db/repository.ts` and `users/db/repository.ts` will need to be reimplemented.
 
