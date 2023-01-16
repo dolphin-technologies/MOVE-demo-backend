@@ -207,7 +207,7 @@ function mapDBEType(dbeType: string): string | undefined {
         return "ACC";
     } else if (dbeType === "CORNERING") {
         return "CRN";
-    } else if (dbeType === "BREAKING") {
+    } else if (dbeType === "BRAKING") {
         return "BRK";
     } else {
         return undefined;
