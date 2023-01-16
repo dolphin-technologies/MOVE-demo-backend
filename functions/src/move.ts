@@ -177,7 +177,8 @@ export async function getPoints(userId: string, startTs: number): Promise<WayPoi
             auth: { username: MOVE_SDK_PROJECT_ID.toString(), password: MOVE_SDK_API_KEY },
             params: {
                 projectId: MOVE_SDK_PROJECT_ID,
-                userId
+                userId,
+                withWayPointInfo: true,
             }
         });
 
