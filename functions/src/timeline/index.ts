@@ -231,7 +231,7 @@ function formatItem(i: move.TimelineItem) {
         const scoreFeature = i.features.scores;
         const safeness = Math.round(((scoreFeature.get("ACCELERATION") || 100) + (scoreFeature.get("CORNERING") || 100) + (scoreFeature.get("BRAKING") || 100)) / 3.0);
         const speed = scoreFeature.get("SPEED") || 100;
-        const distraction = scoreFeature.get("SPEED") || 100;
+        const distraction = scoreFeature.get("DFD") || 100;
         const total = Math.round((speed + safeness + distraction) / 3.0);
         const scores = {
             speed,
