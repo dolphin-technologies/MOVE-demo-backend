@@ -26,6 +26,21 @@ After the deploy command finishes, check the output for the URL of your function
 
 Note: While running `firebase deploy` firebase may ask you to enable certain APIs or change project settings. If it does you will need to make the necessary changes and rerun the `firebase deploy` command.
 
+### 6) Try it out
+After you have deployed the MOVE Demo Backend you may use it with the MOVE Demo App.
+
+To quickly check if it is working you can try to register a user via the API.
+To do that send the following JSON as a POST request to `https://<YOUR-FUNCTION-DOMAIN>/move/api/v1/users`
+```json
+  {
+    "email": "<user-email>",
+    "firstName": "<user-first-name>",
+    "lastName": "<user-last-name>",
+    "password": "<user-password>",
+    "phone": "<user-phone>"
+  }
+```
+
 ### Deploying in other environments
 In the `functions/src/index.ts` file a standard ExpressJS application is constructed. 
 You should be able to run it in any environments where NodeJS applications may be hosted. 
