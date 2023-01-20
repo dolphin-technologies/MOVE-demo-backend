@@ -1,5 +1,5 @@
 # MOVE Demo Backend
-The MOVE Demo Backend is a NodeJS application that can serve as the backend for the MOVE Demo App.
+The MOVE Demo Backend is a NodeJS application that can serve as the backend for the MOVE App.
 
 ## How to Deploy
 The Move Demo Backend is meant to be deployed as a Firebase Function.
@@ -25,6 +25,7 @@ Run the command `firebase deploy`.
 After the deploy command finishes, check the output for the URL of your function.
 
 Note: While running `firebase deploy` firebase may ask you to enable certain APIs or change project settings. If it does you will need to make the necessary changes and rerun the `firebase deploy` command.
+Note: If you get an error from firebase that looks like 'Error: HTTP Error: 404, project or database (default) does not exist' Firebase is still setting up the database just try again in a few minutes.
 
 ### 6) Try it out
 After you have deployed the MOVE Demo Backend you may use it with the MOVE Demo App.
@@ -63,7 +64,7 @@ The MOVE Demo Backend depends on Firestore as a Database.
 To use another Database the repository interfaces in `messages/db/repository.ts` and `users/db/repository.ts` will need to be reimplemented.
 
 ## File Structure
-The MOVE Demo App is a firebase functions based application.
+The MOVE App is a firebase functions based application.
 Configuration files concerning just Firebase are located at the top-level.
 The `function` directory contains the NodeJS application that actually implements the MOVE Demo Backend.
 
